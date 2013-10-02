@@ -1,18 +1,17 @@
 package permuter
 
 import (
-	"container/list"
 	"fmt"
 	"testing"
 )
 
 func ExamplePermute() {
 	myList := []interface{}{1, 2, 3}
-	Permute(myList, func(l *list.List) {
+	Permute(myList, func(l []interface{}) {
 		fmt.Print("[")
-		for e := l.Front(); e != nil; e = e.Next() {
-			fmt.Print(e.Value)
-			if e.Next() != nil {
+		for index, e := range myList {
+			fmt.Print(e)
+			if index != len(myList) {
 				fmt.Print(",")
 			}
 		}
@@ -24,13 +23,13 @@ func ExamplePermute() {
 func TestEmptyPermute(t *testing.T) {
 	original := []interface{}{}
 	called := false
-	Permute(original, func(permutation *list.List) {
+	Permute(original, func(permutation []interface{}) {
 		if called {
 			t.Error("Permute with emty list calls sink more as once")
 		}
 		called = true
-		if permutation.Len() != 0 {
-			t.Error("Permute with empty list has wrong size expected 0, got ", permutation.Len())
+		if len(permutation) != 0 {
+			t.Error("Permute with empty list has wrong size expected 0, got ", len(permutation))
 		}
 	})
 	if !called {
@@ -38,20 +37,13 @@ func TestEmptyPermute(t *testing.T) {
 	}
 }
 
-// var lenTests = []struct {
-// 	length int
-// 	//the sum of all numbers appearing in each position
-// 	sum int
-// }{
-// 	{ 1, },
-// }
-
 func testLength() int {
+	//This function is defined by the test framework and indicates whether a long or short test is requested
 	if testing.Short() {
 		return 5
-	} else {
-		return 11
 	}
+	return 11
+
 }
 
 func TestPermutationCount(t *testing.T) {
@@ -60,7 +52,7 @@ func TestPermutationCount(t *testing.T) {
 		theList := ListOfFirstNPositiveNumbers(length)
 		expectedCount := factorial(length)
 		actual := 0
-		Permute(theList, func(*list.List) {
+		Permute(theList, func([]interface{}) {
 			actual++
 		})
 		if actual != expectedCount {
@@ -70,16 +62,15 @@ func TestPermutationCount(t *testing.T) {
 	}
 }
 
-
 func TestPermuteSum(t *testing.T) {
 	maxLength := testLength()
 	for length := 0; length <= maxLength; length++ {
 		theList := ListOfFirstNPositiveNumbers(length)
 		actual := make([]int, length)
-		Permute(theList, func(theList *list.List) {
+		Permute(theList, func(permutation []interface{}) {
 			counter := 0
-			for e := theList.Front(); e != nil; e = e.Next() {
-				v := (e.Value).(int)
+			for _, e := range permutation {
+				v := (e).(int)
 				actual[counter] += v
 				counter++
 			}
@@ -94,25 +85,24 @@ func TestPermuteSum(t *testing.T) {
 	}
 }
 
-
 func TestPermuteMult(t *testing.T) {
 	maxLength := 4 //higher number will overflow int64 !!
-	
+
 	for length := 0; length <= maxLength; length++ {
 		theList := ListOfFirstNPositiveNumbers(length)
 		actual := make([]uint64, length)
-		for index := range actual{
+		for index := range actual {
 			actual[index] = 1
 		}
-		Permute(theList, func(theList *list.List) {
+		Permute(theList, func(permutation []interface{}) {
 			counter := 0
-			for e := theList.Front(); e != nil; e = e.Next() {
-				v := (e.Value).(int)
+			for _, e := range permutation {
+				v := (e).(int)
 				actual[counter] *= uint64(v)
 				counter++
 			}
 		})
-		expectedProduct := intPow(factorial(length), factorial(length - 1))
+		expectedProduct := intPow(factorial(length), factorial(length-1))
 		for _, value := range actual {
 			if value != expectedProduct {
 				t.Errorf("Expected %d as the product  for a list %s with length %d, got %d instead",
@@ -122,11 +112,11 @@ func TestPermuteMult(t *testing.T) {
 	}
 }
 
-func intPow(base, exp int) uint64{
+func intPow(base, exp int) uint64 {
 	var result uint64 = 1
-	
+
 	base64 := uint64(base)
-	for i:= 0; i < exp; i++{
+	for i := 0; i < exp; i++ {
 		result *= base64
 	}
 	return result
@@ -137,9 +127,9 @@ func testSumOfPermutationElement(t *testing.T) {
 	for length := 0; length <= maxLength; length++ {
 		theList := ListOfFirstNPositiveNumbers(length)
 		actual := 0
-		Permute(theList, func(theList *list.List) {
-			for e := theList.Front(); e != nil; e = e.Next() {
-				v := (e.Value).(int)
+		Permute(theList, func(permutation []interface{}) {
+			for _, e := range permutation {
+				v := (e).(int)
 				actual += v
 			}
 		})
@@ -160,12 +150,12 @@ func ListOfFirstNPositiveNumbers(n int) []interface{} {
 	return theList
 }
 
-func listToString(theList *list.List) string {
+func listToString(theList []interface{}) string {
 
 	s := fmt.Sprint("[")
-	for e := theList.Front(); e != nil; e = e.Next() {
-		s += fmt.Sprint(e.Value)
-		if e.Next() != nil {
+	for index, e := range theList {
+		s += fmt.Sprint(e)
+		if index != len(theList)-1 {
 			s += fmt.Sprint(",")
 		}
 	}
